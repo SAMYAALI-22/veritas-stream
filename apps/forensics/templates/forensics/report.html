@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Veritas Stream | Forensic Report</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-container": "#ff525f",
+                        "on-surface": "#e2e2e8",
+                        "surface-container-high": "#282a2e",
+                        "surface-container-lowest": "#0c0e12",
+                        "secondary-container": "#05e777",
+                        "on-surface-variant": "#e8bcbb",
+                        "surface-container": "#1e2024",
+                        "background": "#111318",
+                        "outline-variant": "#5e3f3e",
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        body { background-color: #111318; color: #e2e2e8; font-family: 'Inter', sans-serif; }
+        .forensic-grid { background-image: radial-gradient(circle, #333539 1px, transparent 1px); background-size: 32px 32px; }
+        
+        @keyframes breach-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-breach { animation: breach-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #0c0e12; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333539; border-radius: 10px; }
+    </style>
+</head>
+
+<body class="bg-background selection:bg-primary-container selection:text-white">
+
+<div id="metadataModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 sm:p-6">
+    <div class="absolute inset-0 bg-black/90 backdrop-blur-md" onclick="toggleModal()"></div>
+    
+    <div class="relative w-full max-w-2xl bg-surface-container-high border border-cyan-400/20 rounded-2xl shadow-[0_0_50px_rgba(6,182,212,0.15)] overflow-hidden flex flex-col max-h-[85vh]">
+        
+        <div class="flex items-center justify-between p-5 border-b border-white/5 bg-surface-container">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-cyan-400 animate-pulse">analytics</span>
+                <h3 class="font-headline text-lg font-bold uppercase tracking-tighter text-on-surface">Heuristic & Metadata Engine</h3>
+            </div>
+            <button onclick="toggleModal()" class="text-on-surface-variant hover:text-primary-container transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto custom-scroll space-y-8 bg-surface-container-lowest/50">
+            
+            <section>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400">Section 01 // Risk Assessment</span>
+                    <div class="h-px flex-1 bg-cyan-400/20"></div>
+                </div>
+                
+                {% if risk_tags %}
+                    <div class="grid gap-3">
+                        {% for tag in risk_tags %}
+                            {% if "SCRUBBED" in tag %}
+                                <div class="bg-yellow-500/10 border-l-4 border-yellow-500 p-4 flex items-start gap-4">
+                                    <span class="material-symbols-outlined text-yellow-500 text-xl">visibility_off</span>
+                                    <div>
+                                        <p class="text-xs font-mono text-yellow-500 font-bold uppercase mb-1">Privacy Scrub Detected</p>
+                                        <p class="text-xs text-on-surface-variant leading-relaxed">{{ tag }}</p>
+                                    </div>
+                                </div>                                
+
+                            {% else %}
+                                <div class="bg-primary-container/10 border-l-4 border-primary-container p-4 flex items-start gap-4">
+                                    <span class="material-symbols-outlined text-primary-container text-xl">gpp_maybe</span>
+                                    <div>
+                                        <p class="text-xs font-mono text-primary-container font-bold uppercase mb-1">Anomaly Detected</p>
+                                        <p class="text-xs text-on-surface-variant leading-relaxed">{{ tag }}</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="bg-secondary-container/5 border-l-4 border-secondary-container p-4 flex items-center gap-4">
+                        <span class="material-symbols-outlined text-secondary-container text-xl">verified_user</span>
+                        <div>
+                            <p class="text-xs font-mono text-secondary-container font-bold uppercase">Heuristic Integrity: Pass</p>
+                            <p class="text-[10px] text-on-surface-variant opacity-60">No software signatures or temporal contradictions found in the container.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </section>
+
+            <section>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400">Section 02 // Raw Header Map</span>
+                    <div class="h-px flex-1 bg-cyan-400/20"></div>
+                </div>
+
+                <div class="bg-black/40 rounded-xl border border-white/5 overflow-hidden">
+                    <table class="w-full text-left font-mono text-[10px] border-collapse">
+                        <thead>
+                            <tr class="bg-white/5 text-cyan-400/70">
+                                <th class="px-4 py-2 border-b border-white/5 uppercase tracking-tighter">Key Tag</th>
+                                <th class="px-4 py-2 border-b border-white/5 uppercase tracking-tighter">Hex/String Value</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                        {% if metadata %}
+                            {% for key, value in metadata.items %}
+                            <tr class="hover:bg-cyan-400/5 transition-colors">
+                                <td class="px-4 py-3 text-on-surface-variant font-bold whitespace-nowrap border-r border-white/5">{{ key }}</td>
+                                <td class="px-4 py-3 text-on-surface break-all">{{ value }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="2" class="px-4 py-16 text-center bg-primary-container/5">
+                                    <span class="material-symbols-outlined text-4xl text-primary-container opacity-60 block mb-4">no_accounts</span>
+                                    <p class="text-primary-container font-bold uppercase tracking-widest text-[11px] mb-2">
+                                        [FORENSIC ALERT] No Metadata Signatures Found
+                                    </p>
+                                    <p class="text-on-surface-variant opacity-60 text-[10px] max-w-sm mx-auto leading-relaxed">
+                                        This artifact lacks standard EXIF/XMP headers. This occurs when an image is 
+                                        <span class="text-white">Generated by AI</span> (Gemini/Midjourney) or 
+                                        <span class="text-white">Scrubbed by Social Media Proxies</span> (WhatsApp/Discord).
+                                    </p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        
+        <div class="p-4 bg-surface-container border-t border-white/5 flex justify-between items-center px-6">
+            <span class="text-[9px] font-mono text-on-surface-variant opacity-50 uppercase tracking-widest">Veritas Node_01 // End of Log</span>
+            <button onclick="toggleModal()" class="text-[10px] font-bold text-cyan-400 hover:text-white uppercase tracking-tighter transition-colors">Close Vault</button>
+        </div>
+    </div>
+</div>
+
+<header class="fixed top-0 z-50 w-full flex justify-between items-center px-8 py-4 bg-[#1e2024] font-['Space_Grotesk'] font-bold tracking-tight border-b-0 shadow-none">
+    <div class="text-xl font-bold text-[#e2e2e8] tracking-widest uppercase">Veritas Stream Forensic Report</div>
+</header>
+
+<nav class="fixed left-0 top-0 h-screen w-64 bg-[#111318] flex flex-col pt-24 font-['Space_Grotesk'] text-sm uppercase tracking-tighter border-r-0 z-40">
+    <div class="px-8 mb-10">
+        <div class="text-primary-container font-black text-2xl tracking-tighter">VERITAS</div>
+        <div class="text-[#e2e2e8]/40 text-[10px] tracking-[0.2em]">Forensic Node 01</div>
+    </div>
+    
+    <div class="flex flex-col gap-1">
+        <a class="flex items-center gap-4 bg-[#333539] text-primary-container border-l-4 border-primary-container px-8 py-3 transition-all" href="#">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <span>Forensic Archive</span>
+        </a>
+
+        <button onclick="toggleModal()" class="flex items-center gap-4 text-[#e2e2e8]/50 hover:text-cyan-400 px-8 py-3 hover:bg-[#1e2024] border-l-4 border-transparent hover:border-cyan-400/50 transition-all group w-full text-left">
+            <span class="material-symbols-outlined group-hover:scale-110 transition-transform">database</span>
+            <span>Metadata Deep Dive</span>
+        </button>
+        
+        <a class="flex items-center gap-4 text-[#e2e2e8]/50 hover:text-primary-container px-8 py-3 hover:bg-[#1e2024] border-l-4 border-transparent hover:border-primary-container/50 transition-all group" href="{% url 'upload' %}">
+            <span class="material-symbols-outlined group-hover:-rotate-90 transition-transform duration-300">radar</span>
+            <span>Initialize Scan</span>
+        </a>
+
+        <a href="{% url 'export_pdf' report.id %}" class="flex items-center gap-4 text-secondary-container hover:bg-[#1e2024] px-8 py-3 transition-all group border-l-4 border-transparent hover:border-secondary-container">
+        <span class="material-symbols-outlined group-hover:scale-110 transition-transform">picture_as_pdf</span>
+        <span>Export Notarized PDF</span>
+        </a>
+    </div>
+</nav>
+
+<main class="ml-64 pt-24 min-h-screen forensic-grid p-10">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-end mb-12">
+            <div>
+                <h1 class="font-headline text-5xl font-black tracking-tighter text-on-surface uppercase mb-2">Analysis Session <span class="text-primary-container">#{{ report.id|default:"8821-X" }}</span></h1>
+                <p class="font-label text-on-surface-variant tracking-widest text-xs uppercase opacity-70">Deepfake Detection Algorithm V4.2.0 • Scanning Node 01</p>
+            </div>
+            <div class="bg-surface-container-high px-6 py-2 border-l-2 {% if status == 'BREACH_DETECTED' %}border-primary-container{% else %}border-secondary-container{% endif %}">
+                <span class="block text-[10px] text-on-surface-variant uppercase mb-1">Status</span>
+                <span class="{% if status == 'BREACH_DETECTED' %}text-primary-container animate-breach{% else %}text-secondary-container{% endif %} font-headline font-bold uppercase tracking-widest text-sm">
+                    {% if status == 'BREACH_DETECTED' %}SYSTEM COMPROMISED{% else %}Active Scan Complete{% endif %}
+                </span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-8 items-stretch">
+            <div class="col-span-12 lg:col-span-7 bg-surface-container-high rounded-xl overflow-hidden relative group">
+                <div class="absolute top-4 left-4 z-10 flex gap-2">
+                    <span class="bg-black/60 backdrop-blur-md px-3 py-1 text-[10px] font-bold tracking-tighter uppercase border border-outline-variant/30 {% if is_fake or status == 'BREACH_DETECTED' %}text-primary-container{% else %}text-secondary-container{% endif %}">Evidence Buffer</span>
+                </div>
+                <div class="aspect-video w-full bg-surface-container-lowest flex items-center justify-center overflow-hidden">
+                    <img alt="Forensic Analysis" class="w-full h-full object-cover opacity-80 {% if status == 'BREACH_DETECTED' %}grayscale sepia-[.5] hue-rotate-[-50deg] saturate-[2]{% endif %}" src="{{ image_url }}" />
+                    <div class="absolute inset-0 pointer-events-none border-[1.5rem] border-surface-container-high"></div>
+                    <div class="absolute inset-0 pointer-events-none ring-1 ring-inset {% if is_fake or status == 'BREACH_DETECTED' %}ring-primary-container/20{% else %}ring-secondary-container/20{% endif %}"></div>
+                </div>
+            </div>
+
+            <div class="col-span-12 lg:col-span-5 flex flex-col gap-8">
+                <div class="bg-surface-container p-10 flex flex-col items-center justify-center text-center relative overflow-hidden h-full {% if status == 'BREACH_DETECTED' %}border-2 border-primary-container{% endif %}">
+                    {% if status == 'BREACH_DETECTED' %}
+                        <div class="absolute inset-0 bg-primary-container/5 pointer-events-none"></div>
+                        <span class="material-symbols-outlined text-primary-container text-6xl mb-4 relative z-10">gpp_bad</span>
+                        <h2 class="font-headline text-5xl font-black tracking-tighter uppercase leading-none mb-2 text-primary-container drop-shadow-[0_0_20px_rgba(255,82,95,0.4)] relative z-10">{{ verdict }}</h2>
+                        <div class="mt-8 bg-surface-container-lowest border border-primary-container/30 p-4 text-left w-full relative z-10">
+                            <span class="text-primary-container font-mono text-[10px] uppercase block mb-1">Fatal Error</span>
+                            <p class="font-mono text-xs text-on-surface-variant leading-relaxed">{{ error_message }} Signature mismatch detected.</p>
+                        </div>
+                    {% else %}
+                        <span class="font-label text-xs uppercase tracking-[0.4em] text-on-surface-variant mb-4">Forensic Verdict</span>
+                        <h2 class="font-headline text-8xl font-black tracking-tighter uppercase leading-none mb-2 
+                            {% if is_fake %} text-primary-container drop-shadow-[0_0_20px_rgba(255,82,95,0.4)]
+                            {% else %} text-secondary-container drop-shadow-[0_0_20px_rgba(5,231,119,0.4)] {% endif %}">
+                            {{ verdict }}
+                        </h2>
+                        <div class="h-1 w-full {% if is_fake %}bg-primary-container/20{% else %}bg-secondary-container/20{% endif %} mt-4 overflow-hidden">
+                            <div class="h-full {% if is_fake %}bg-primary-container{% else %}bg-secondary-container{% endif %} w-3/4"></div>
+                        </div>
+                        <p class="mt-8 font-label text-sm text-on-surface-variant max-w-[280px] leading-relaxed opacity-60 italic">
+                            {% if is_fake %}Synthetically generated artifacts detected in manifold analysis.{% else %}No synthetic anomalies detected. Pixel-variance aligns with authentic capture.{% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <div class="bg-surface-container-high p-8 flex items-center gap-10 {% if status == 'BREACH_DETECTED' %}opacity-50 grayscale pointer-events-none{% endif %}">
+                    <div class="relative w-32 h-32 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90">
+                            <circle class="text-surface-container-lowest" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="8"></circle>
+                            {% if status != 'BREACH_DETECTED' %}
+                                <circle class="{% if is_fake %}text-primary-container{% else %}text-secondary-container{% endif %}" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-dasharray="364" stroke-dashoffset="60" stroke-width="8"></circle>
+                            {% endif %}
+                        </svg>
+                        <span class="absolute font-headline text-3xl font-black">{% if status == 'BREACH_DETECTED' %}--{% else %}{{ confidence|slice:":-2" }}{% endif %}%</span> 
+                    </div>
+                    <div class="flex-1">
+                        <span class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1 block">Threat Score</span>
+                        <div class="font-headline text-4xl font-bold tracking-tighter text-on-surface mb-2">{% if status == 'BREACH_DETECTED' %}NULL{% else %}{{ confidence }}{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-12">
+                <div class="bg-surface-container-lowest p-8 border border-outline-variant/10">
+                    <div class="flex items-center gap-3 mb-8">
+                        <span class="material-symbols-outlined text-sm {% if is_fake or status == 'BREACH_DETECTED' %}text-primary-container{% else %}text-secondary-container{% endif %}">{% if status == 'BREACH_DETECTED' %}lock_broken{% else %}description{% endif %}</span>
+                        <h3 class="font-headline text-sm font-bold uppercase tracking-widest">Digital Chain of Custody</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+                        <div>
+                            <span class="block text-[10px] font-label text-on-surface-variant uppercase tracking-widest mb-2 opacity-50">File Name</span>
+                            <code class="text-on-surface font-mono text-sm block truncate bg-surface-container p-2 border-l-2 {% if is_fake or status == 'BREACH_DETECTED' %}border-primary-container{% else %}border-secondary-container{% endif %}">{{ report.file_name }}</code>
+                        </div>
+                        <div class="lg:col-span-2">
+                            <span class="block text-[10px] font-label text-on-surface-variant uppercase tracking-widest mb-2 opacity-50">SHA-256 Hash</span>
+                            <code class="text-on-surface font-mono text-xs block break-all bg-surface-container p-2">{{ report.sha256_hash }}</code>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-label text-on-surface-variant uppercase tracking-widest mb-2 opacity-50">Analysis Date</span>
+                            <div class="text-on-surface font-headline text-sm font-bold">{% now "Y-M-d H:i:s T" %}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function toggleModal() {
+        const modal = document.getElementById('metadataModal');
+        const isHidden = modal.classList.contains('hidden');
+        
+        if (isHidden) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Lock background scroll
+        } else {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Unlock background scroll
+        }
+    }
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !document.getElementById('metadataModal').classList.contains('hidden')) {
+            toggleModal();
+        }
+    });
+</script>
+
+</body>
+</html>
